@@ -25,6 +25,7 @@ from whisperx import (
 
 
 from app.logic.context import tmp_image_folder
+from app.logic.utils import create_doc
 
 load_dotenv()
 
@@ -106,15 +107,25 @@ def full_processing(data=Body()):
 
     if result is not None and result['data'] is not None:
         value_as_bytes = str(result).encode('utf-8')
-        res_filename = f'/{user_id}/{file_id}/'+str(hashlib.md5(value_as_bytes).hexdigest())+'.json'
+        new_file_name = str(hashlib.md5(value_as_bytes).hexdigest())
+        res_filename_json = f'/{user_id}/{file_id}/'+ new_file_name+'.json'
+        res_filename_docx = f'/{user_id}/{file_id}/'+ new_file_name+'.docx'
 
         res_data = io.BytesIO(value_as_bytes)
 
-        client.put_object(bucket_name=MINIO_BUCKET, object_name=f'{res_filename}', data=res_data,
+        client.put_object(bucket_name=MINIO_BUCKET, object_name=f'{res_filename_json}', data=res_data,
                           length=len(value_as_bytes))
+
+        with tmp_image_folder() as tmp_dir:
+            tmp_file_path = f'{tmp_dir}/{new_file_name}'
+            doc = create_doc(result)
+            doc.save(tmp_file_path)
+            client.fput_object(bucket_name=MINIO_BUCKET, object_name=f'{res_filename_docx}', file_path=tmp_file_path)
+
+
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content={'result': res_filename})
+            content={'result': res_filename_json})
 
     return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
