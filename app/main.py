@@ -105,7 +105,7 @@ def full_processing(data=Body()):
         response.release_conn()
 
     if result is not None and result['data'] is not None:
-        value_as_bytes = json.dumps(result).encode('utf-8')
+        value_as_bytes = str(result).encode('utf-8')
         res_filename = f'/{user_id}/{file_id}/'+str(hashlib.md5(value_as_bytes).hexdigest())+'.json'
 
         res_data = io.BytesIO(value_as_bytes)
