@@ -1,9 +1,9 @@
-import datetime
 import io
 
 from fastapi import FastAPI, Body, status, HTTPException
 from fastapi.responses import JSONResponse
 import minio
+import json
 
 
 import os
@@ -13,6 +13,7 @@ import hashlib
 from app.logic.audio import (
     process_audio_file,
 )
+from app.logic.json_processing import json_rework
 
 from whisperx import (
     load_model,
@@ -21,6 +22,7 @@ from whisperx import (
     align,
     assign_word_speakers,
 )
+
 
 from app.logic.context import tmp_image_folder
 
@@ -32,7 +34,7 @@ DEVICE = os.getenv('DEVICE', 'cuda')
 DEFAULT_LANG = os.getenv('DEFAULT_LANG', 'ru')
 
 transcribe_model = load_model(
-        os.getenv('WHISPER_MODEL', 'latge-v3'),
+        os.getenv('WHISPER_MODEL', 'large-v3'),
         DEVICE,
         compute_type=os.getenv('COMPUTE_TYPE', 'float16'),
         language=DEFAULT_LANG,
@@ -90,6 +92,8 @@ def full_processing(data=Body()):
             diarize_segments = diarize_model(audio)
 
             result = assign_word_speakers(diarize_segments, result_align)
+            result = json_rework(result)
+
 
     except ValueError:
         return JSONResponse(
@@ -100,8 +104,8 @@ def full_processing(data=Body()):
         response.close()
         response.release_conn()
 
-    if result is not None and result['segments'] is not None:
-        value_as_bytes = str(result).encode('utf-8')
+    if result is not None and result['data'] is not None:
+        value_as_bytes = json.dumps(result).encode('utf-8')
         res_filename = f'/{user_id}/{file_id}/'+str(hashlib.md5(value_as_bytes).hexdigest())+'.json'
 
         res_data = io.BytesIO(value_as_bytes)
