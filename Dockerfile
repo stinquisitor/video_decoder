@@ -23,6 +23,4 @@ RUN pip install -U pip setuptools
 COPY . .
 
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-RUN pip install git+https://github.com/m-bain/whisperx.git
-
-RUN pip install -r requirements.txt
+RUN pip install git+https://github.com/m-bain/whis

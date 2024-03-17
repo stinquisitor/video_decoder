@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 import minio
 import json
 
-
 import os
 from dotenv import load_dotenv
 import hashlib
@@ -69,10 +68,8 @@ MINIO_BUCKET = os.getenv('MINIO_BUCKET', 'my-bucket')
 @app.post("/full_processing")
 def full_processing(data=Body()):
     user_id = data['user_id']
-    file_id = data['file_id']
-    file_name = data['filename']
-    file_path = f'/{user_id}/{file_id}/{file_name}'
-
+    file_path = data['filename']
+    file_name = os.path.basename(file_path)
     try:
 
 
